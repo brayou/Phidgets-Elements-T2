@@ -1,0 +1,62 @@
+LED Board:
+
+	Set	Color	Port
+	1R	red	60,61
+	1L	red	62,63
+	2R	yellow	56,57
+	2L	yellow	58,59
+	3R	blue	54,55
+	3L	blue	52,53
+	4R	green	50,51
+	4L	green	48,49
+	5R	orange	18,19
+	5L	orange	16,17
+	
+
+	
+	1	blue	7
+	1 	green	6
+	
+	2	blue	5
+	2 	green	4
+	
+	3	blue	2
+	3 	green	3
+	
+	4	blue	1
+	4 	green	0
+	
+
+Interface Board ID # 85215:
+
+Analog In:
+	0	Touch1
+	1	Touch2
+	2	Touch3
+	3	Touch4
+	4	IR1
+	5	IR2
+	6	IR3
+	7	IR4
+
+Digital Out:
+	0	
+	1	
+	2	
+	3	
+	4	
+	5
+	6	
+	7
+
+Digital In:
+	0	
+	1	
+	2	
+	3	
+	4	
+	5
+	6	
+	7	
+
+RFID Board ID # 61663:
