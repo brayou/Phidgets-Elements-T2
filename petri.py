@@ -19,8 +19,6 @@
 ##############################################################################
 # Python specific Imports
 import sys
-import random
-import math
 
 # Panda specific imports
 import direct.directbase.DirectStart                                     
@@ -31,7 +29,8 @@ from direct.task import Task
 from direct.gui.DirectGui import OnscreenText
 
 # Program specific imports
-import random
+from random import randint
+import math
 
 # Constants
 
@@ -65,7 +64,7 @@ class World(DirectObject):
         self.robot.setPosHpr(0,0,-.025,0,0,0)
         self.robot.setScale(0.0025)
         ## self.robot.place()
-        
+        self.phaseTwo()
         
         
     def deltaFunc(self,v,r,mult):
@@ -100,20 +99,16 @@ class World(DirectObject):
             # If [element] and less than 2 [element] mana in the current circle
                 # texture the mana orb
             if randElem == 0 and self.earthCount < 2:
-                self.manaTex = loader.loadTexture(self.manaTex["earth"])
-                self.mana[i].setTexture(self.manaTex,1)
+                self.mana[i].setTexture(self.manaTex["earth"],1)
                 self.earthCount += 1
             elif randElem == 1 and self.windCount < 2:
-                self.manaTex = loader.loadTexture(self.manaTex["fire"])
-                self.mana[i].setTexture(self.manaTex,1)
+                self.mana[i].setTexture(self.manaTex["wind"],1)
                 self.windCount += 1
             elif randElem == 2 and self.fireCount < 2:
-                self.manaTex = loader.loadTexture(self.manaTex["water"])
-                self.mana[i].setTexture(self.manaTex,1)
+                self.mana[i].setTexture(self.manaTex["fire"],1)
                 self.fireCount += 1
             elif randElem == 3 and self.waterCount < 2:
-                self.manaTex = loader.loadTexture(self.manaTex["air"])
-                self.mana[i].setTexture(self.manaTex,1)
+                self.mana[i].setTexture(self.manaTex["water"],1)
                 self.waterCount += 1
             # Reset the element counts when moving onto the next circle so as to allow 2 per
             if i == 8 or i == 15 or i == 21 or i == 26 or i == 30:
