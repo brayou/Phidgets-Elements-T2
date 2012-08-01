@@ -1,3 +1,5 @@
+TEST_MODE = True
+
 # how many interface kits are attached
 NUM_INTERFACES = 1
 

@@ -41,7 +41,7 @@ class Phidget(DirectObject):
         self.startInterface()
         
         # start the RFID
-        ## self.startRFID()
+        self.startRFID()
         
         # accepts 
         self.accept( "o", self.allLEDsOff)

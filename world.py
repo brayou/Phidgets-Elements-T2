@@ -1,55 +1,89 @@
 ##############################################################################
-## Program Name (File Name): Caps.py
+## Program Name (File Name): Manabots.py
 ## Programmer: Branden Youssef
-## Purpose: PB Week 1 Project
-## Date: 7/9/12
+## Purpose: GD 2 Phidgets Elements - Team 2
+## Date: 8/1/12
 ## Additional Notes:
-##   -This is a basic template for you to use in starting your programming
-##    homework assignment.
-##      -There are some useful functions that might be helpful, though I
-##       haven't given you everything you'll need.
-##
-##   -You do not have to use everything in here if you don't want to
-##    this is just to give you an extra bump along 'correct' path.
-##
-##   -Feel free to rename anything you want, or to even start from scratch.
-##
-##   -To help some of the functions have been named and a very brief comment
-##    is there to sort of give you an idea of what it might be used for.
+## 
 ##############################################################################
-# Python specific Imports
+#Basic imports
+from threading import *
+from ctypes import *
+from math import *
+from time import sleep
+from random import randint
 import sys
 
-# Panda specific imports
-import direct.directbase.DirectStart                                     
+#Panda specific imports
+import direct.directbase.DirectStart 
 from direct.showbase.DirectObject import DirectObject
 from pandac.PandaModules import *
-from direct.interval.IntervalGlobal import *
-from direct.task import Task
-from direct.gui.DirectGui import OnscreenText
+from direct.gui.DirectGui import *
+from direct.task import Task 
+from direct.actor import Actor 
+from direct.interval.IntervalGlobal import * 
 
-# Program specific imports
-from random import randint
-import math
-from math import sqrt
+#World specific imports
+from config import *
+from phidgets_manager import *
 
-# Constants
-
-####### Start: World Class Definition ########################################
 class World(DirectObject):
     # Initialization Function
     def __init__(self): 
         print "Initializing World"
-        # Set up the camera
         
+        # Set up the camera
         base.disableMouse()
         base.camera.setPos(0,-2.5,0)
         base.camera.setHpr(0,0,0)
         base.camLens.setFar(10000)
         base.setBackgroundColor( .5, .5, .5 )
         ## base.camera.place()
+
+        # start the phidget manager
+        self.phidget = Phidget()
+        self.phidget.allLEDsOff()
+
+        # accept sensor input
+        self.accept( "touchRec", self.touchRec )        # received a touch sensor from the phidgets manager
+        self.accept( "motionRec", self.motionRec )      # received a motion sensor from the phidgets manager
+        self.accept( "irRec", self.irRec )              # received a ir sensor from the phidgets manager
+        self.accept( "pressureRec", self.pressureRec )  # received a pressure plate sensor from the phidgets manager
+        self.accept( "RFIDtagRec", self.rfidTagRec )    # received a rfid tag sensor from the phidgets manager
         
+        if TEST_MODE:
+            self.accept( "w-repeat", self.move, [ 1 ] )
+            self.accept( "s-repeat", self.move, [ -1 ] )
+            self.accept( "a-repeat", self.turn, [ -10 ] )
+            self.accept( "d-repeat", self.turn, [ 10 ] )
+            self.accept( "escape", self.exit)               # exit the program
         
+        # start screen
+        self.startScreen = loader.loadModel("Models/plane.egg")
+        self.startScreen.reparentTo(render)
+        self.startScreenTex = loader.loadTexture("Textures/startScreen.jpg")
+        self.startScren.setTexture(self.startScreenTex,1)
+        self.screen = 0
+        if 
+        # start polling
+        self.phidget.startPolling()
+        
+
+###################### ENVIRONMENT ###########################################
+    
+    def nextScreen(self):
+        if self.screen == 0:
+            self.startScreenTex = loader.loadTexture("Textures/instructions.jpg")
+            self.startScreen.setTexture(self.startScreenTex,1)
+            self.phaseOne()
+        else:
+            self.startScreenTex = loader.loadTexture("Textures/startScreen.jpg")
+            self.startScreen.setTexture(self.startScreenTex,1)
+             
+            
+    def phaseOne(self):
+
+    def phaseTwo(self):
         # Load petridish
         self.dish = loader.loadModel("Models/petridish.egg")
         self.dish.reparentTo(render)
@@ -79,8 +113,6 @@ class World(DirectObject):
     def yFinder(self,x):
         y = 0.2*sqrt(9-25*x*x)
         ## print y
-        
-    ## def phaseOne(self):
         
     def phaseTwo(self):
         # Load the mana orbs
@@ -163,15 +195,35 @@ class World(DirectObject):
         self.mana[31].setPos(0,-0.5,0)
         self.mana[32].setPos(0,-0.5,0)
         
-        # Quit Game Function
-    def quit(self):
-        # Print Goodbye Message 
-        print "Bye! Thank you for playing."
-        # Exit out of the game
-        sys.exit()
-######## End: World Class Definition #########################################
+###################### HANDLERS ##############################################
+    
+    def touchRec(self,which):
+        # a touch sensor has been received, string which from config T_FUNC array
+        print "Touch received:", which
+        self.touch = which
+    def motionRec(self,state):
+        # a motion sensor has been received, state provided either "got" or "lost"
+        ## print "Motion received:", state
+        None
+        
+    def irRec(self,which):
+        # a IR sensor has been received, string which from config IR_FUNC array
+        print "IR received:", which
+        
+    def pressureRec(self,state):
+        # a pressure sensor has been received, state provided either "got" or "lost"
+        print "Pressure received:", state
+        
+    def rfidTagRec(self, tag, state):
+        # a RFID tag sensor has been received, tag is the string identifier 
+        print "RFID tag received:", tag, "state:", state
+        
+###################### SYSTEM ################################################
 
-# Create an instance of class World
-w = World() # Stored as "w"
-# Run the program
+    def exit(self):
+        self.phidget.allLEDsOff()
+        sys.exit()
+
+w = World()
+
 run()
