@@ -31,6 +31,7 @@ from direct.gui.DirectGui import OnscreenText
 # Program specific imports
 from random import randint
 import math
+from math import sqrt
 
 # Constants
 
@@ -61,18 +62,23 @@ class World(DirectObject):
         self.robot.reparentTo(render)
         ## self.robotTex = loader.loadTexture("Textures/Nano1Body.jpg")
         ## self.robot.setTexture(self.robotTex,1)
-        self.robot.setPosHpr(0,0,-.025,0,0,0)
+        self.robot.setPosHpr(0,0,-.25,0,0,0)
         self.robot.setScale(0.0025)
         ## self.robot.place()
         self.phaseTwo()
+        self.yFinder(0)
         
         
-    def deltaFunc(self,v,r,mult):
-        #radius of petri dish
-        R=.6
-        V = R*mult-((R*mult*v)/r)
-        print V
-        return V
+    ## def deltaFunc(self,v,r,mult):
+        ## #radius of petri dish
+        ## R=.6
+        ## V = R*mult-((R*mult*v)/r)
+        ## ## print V
+        ## return V
+        
+    def yFinder(self,x):
+        y = 0.2*sqrt(9-25*x*x)
+        ## print y
         
     ## def phaseOne(self):
         
