@@ -27,8 +27,6 @@ from direct.interval.IntervalGlobal import *
 from interface_config import *
 
 
-
-
 class Phidget(DirectObject): 
     def __init__(self):
         
