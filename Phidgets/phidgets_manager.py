@@ -7,12 +7,12 @@ import time
 import subprocess
 
 #Phidget specific imports
-from Phidgets.PhidgetException import *
-from Phidgets.Events.Events import *
-from Phidgets.Devices.InterfaceKit import *
-from Phidgets.Devices.LED import *
-from Phidgets.Devices.TextLCD import TextLCD
-from Phidgets.Devices.RFID import *
+from PhidgetException import *
+from Events.Events import *
+from Devices.InterfaceKit import *
+from Devices.LED import *
+from Devices.TextLCD import TextLCD
+from Devices.RFID import *
 
 #Panda specific imports
 import direct.directbase.DirectStart 

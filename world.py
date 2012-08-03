@@ -25,7 +25,7 @@ from direct.interval.IntervalGlobal import *
 
 #World specific imports
 from config import *
-from phidgets_manager import *
+from Phidgets.phidgets_manager import *
 
 class World(DirectObject):
     # Initialization Function
@@ -39,35 +39,57 @@ class World(DirectObject):
         base.camLens.setFar(10000)
         base.setBackgroundColor( .5, .5, .5 )
         ## base.camera.place()
-
-        # start the phidget manager
-        self.phidget = Phidget()
-        self.phidget.allLEDsOff()
-
-        # accept sensor input
-        self.accept( "touchRec", self.touchRec )        # received a touch sensor from the phidgets manager
-        self.accept( "motionRec", self.motionRec )      # received a motion sensor from the phidgets manager
-        self.accept( "irRec", self.irRec )              # received a ir sensor from the phidgets manager
-        self.accept( "pressureRec", self.pressureRec )  # received a pressure plate sensor from the phidgets manager
-        self.accept( "RFIDtagRec", self.rfidTagRec )    # received a rfid tag sensor from the phidgets manager
+        # Declare variables
+        self.ir = [False, False, False, False]
+        self.touch = self.ir
+        #Set sensor output variables to False
+        self.earth = False
+        self.wind = False
+        self.fire = False
+        self.water = False
+        self.next = False
+        self.practice = False
+        self.help = False
+        self.exit = False
         
         if TEST_MODE:
-            self.accept( "w-repeat", self.move, [ 1 ] )
-            self.accept( "s-repeat", self.move, [ -1 ] )
-            self.accept( "a-repeat", self.turn, [ -10 ] )
-            self.accept( "d-repeat", self.turn, [ 10 ] )
+            self.accept( "q", self.irRec,[0])
+            self.accept( "w", self.irRec,[1])
+            self.accept( "e", self.irRec,[2])
+            self.accept( "r", self.irRec,[3])
+            self.accept( "a", self.touchRec,[0])
+            self.accept( "s", self.touchRec,[1])
+            self.accept( "d", self.touchRec,[2])
+            self.accept( "f", self.touchRec,[3])
             self.accept( "escape", self.exit)               # exit the program
+            
+        if not TEST_MODE:
+           # start the phidget manager
+            self.phidget = Phidget()
+            self.phidget.allLEDsOff()
+
+            # accept sensor input
+            self.accept( "touchRec", self.touchRec )        # received a touch sensor from the phidgets manager
+            self.accept( "motionRec", self.motionRec )      # received a motion sensor from the phidgets manager
+            self.accept( "irRec", self.irRec )              # received a ir sensor from the phidgets manager
+            self.accept( "pressureRec", self.pressureRec )  # received a pressure plate sensor from the phidgets manager
+            self.accept( "RFIDtagRec", self.rfidTagRec )    # received a rfid tag sensor from the phidgets manager
+            
+            # start polling
+            self.phidget.startPolling()
+        taskMgr.doMethodLater(0.125,self.checkSensors,"checkSensor")
         
         # start screen
         self.startScreen = loader.loadModel("Models/plane.egg")
         self.startScreen.reparentTo(render)
         self.startScreenTex = loader.loadTexture("Textures/startScreen.jpg")
-        self.startScren.setTexture(self.startScreenTex,1)
+        self.startScreen.setTexture(self.startScreenTex,1)
+        self.startScreen.setScale(0.4)
         self.screen = 0
-        if 
-        # start polling
-        self.phidget.startPolling()
         
+        #activate nextScreen upon phase button press
+        if self.next == True:
+           self.nextScreens()
 
 ###################### ENVIRONMENT ###########################################
     
@@ -75,13 +97,28 @@ class World(DirectObject):
         if self.screen == 0:
             self.startScreenTex = loader.loadTexture("Textures/instructions.jpg")
             self.startScreen.setTexture(self.startScreenTex,1)
-            self.phaseOne()
+            self.startScreen.reparentTo(render)
+            self.screen = 1
+        elif self.screen == 1:
+            self.startScreenTex = loader.loadTexture("Textures/controls.jpg")
+            self.startScreen.setTexture(self.startScreenTex,1)
+            self.startScreen.reparentTo(render)
+            self.screen == 2
+            self.phaseZero()
         else:
             self.startScreenTex = loader.loadTexture("Textures/startScreen.jpg")
             self.startScreen.setTexture(self.startScreenTex,1)
+            self.startScreen.reparentTo(render)
              
-            
+    def phaseZero(self):
+        self.startScreen.hideNode()
+        self.ui = loader.loaderModel("Models/plane.egg")
+        self.ui.reparentTo(render)
+        self.uiTex = loader.loadTexture("Textures/ui.jpg")
+        self.ui.setTexture(self.uiTex,1)
+        
     def phaseOne(self):
+        self.ui.reparentTo(render)
         ## def deltaFunc(self,v,r,mult):
         ## #radius of petri dish
         ## R=.6
@@ -94,6 +131,7 @@ class World(DirectObject):
         ## print y
         
     def phaseTwo(self):
+        self.ui.reparentTo(render)
         # Load petridish
         self.dish = loader.loadModel("Models/petridish.egg")
         self.dish.reparentTo(render)
@@ -174,12 +212,29 @@ class World(DirectObject):
         self.mana[31].setPos(0,-0.5,0)
         self.mana[32].setPos(0,-0.5,0)
         
+    def endRound(self):
+        print "Round over"
+        self.ui.hideNode()
+        self.startScreen.reparentTo(render)
+        self.startScreenTex = loader.loadTexture("Textures/endRound.jpg")
+        self.startScreen.setTexture(self.startScreenTex,1)
+        
+    def exitGame(self):
+        print "Game over"
+        self.ui.hideNode()
+        self.startScreen.reparentTo(render)
+        self.startScreenTex = loader.loadTexture("Textures/endGame.jpg")
+        self.startScreen.setTexture(self.startScreenTex,1)
+        
+        
+        
 ###################### HANDLERS ##############################################
     
     def touchRec(self,which):
         # a touch sensor has been received, string which from config T_FUNC array
         print "Touch received:", which
-        self.touch = which
+        self.touch[which] = True
+    
     def motionRec(self,state):
         # a motion sensor has been received, state provided either "got" or "lost"
         ## print "Motion received:", state
@@ -188,7 +243,8 @@ class World(DirectObject):
     def irRec(self,which):
         # a IR sensor has been received, string which from config IR_FUNC array
         print "IR received:", which
-        
+        self.ir[which] = True
+    
     def pressureRec(self,state):
         # a pressure sensor has been received, state provided either "got" or "lost"
         print "Pressure received:", state
@@ -196,6 +252,38 @@ class World(DirectObject):
     def rfidTagRec(self, tag, state):
         # a RFID tag sensor has been received, tag is the string identifier 
         print "RFID tag received:", tag, "state:", state
+        
+    def checkSensors(self,task):
+        #earth ir sensor pressed
+        if self.ir[0]:
+            self.earth = True
+        #wind ir sensor pressed
+        if self.ir[1]:
+            self.wind = True
+        #fire ir sensor pressed
+        if self.ir[2]:
+            self.fire = True
+        #water ir sensor pressed
+        if self.ir[3]:
+            self.water = True
+        
+        #next button pressed
+        if self.touch[0]:
+            self.next = True
+        #practice button pressed
+        if self.touch[1]:
+            self.practice = True
+        #help button pressed
+        if self.touch[2]:
+            self.help = True
+        #exit button pressed
+        if self.touch[3]:
+            self.exit = True
+        
+        #Reset values so as to make sensor reads instantaneous
+        self.ir = [False, False, False, False]
+        self.touch = [False, False, False, False]
+        return Task.again
         
 ###################### SYSTEM ################################################
 
