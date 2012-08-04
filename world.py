@@ -27,6 +27,10 @@ from direct.interval.IntervalGlobal import *
 from config import *
 from Phidgets.phidgets_manager import *
 
+#TO DO
+#Fix the skipping of screens
+#TO DO
+
 class World(DirectObject):
     # Initialization Function
     def __init__(self): 
@@ -61,7 +65,7 @@ class World(DirectObject):
             self.accept( "s", self.touchRec,[1])
             self.accept( "d", self.touchRec,[2])
             self.accept( "f", self.touchRec,[3])
-            self.accept( "escape", self.exit)               # exit the program
+            self.accept( "escape", self.powerOff)               # exit the program
             
         if not TEST_MODE:
            # start the phidget manager
@@ -82,146 +86,183 @@ class World(DirectObject):
         # start screen
         self.startScreen = loader.loadModel("Models/plane.egg")
         self.startScreen.reparentTo(render)
-        self.startScreenTex = loader.loadTexture("Textures/startScreen.jpg")
-        self.startScreen.setTexture(self.startScreenTex,1)
-        self.startScreen.setScale(0.4)
+        self.startScreen.setScale(PLANE_SCALE)
         self.screen = 0
-        
-        #activate nextScreen upon phase button press
-        if self.next == True:
-           self.nextScreens()
+
+        # start the game
+        taskMgr.doMethodLater(NEXT_DELAY,self.moveOn,"moveOn")
+        taskMgr.add(self.exitGame,"exitGame")
+        self.nextScreen()
 
 ###################### ENVIRONMENT ###########################################
+    def moveOn(self,task):
+        #activate nextScreen upon phase button press
+        if self.next:
+            print "Next screen"
+            self.screen +=1
+            self.nextScreen()
+            return task.again
+        else:
+            return task.cont
     
+    def exitGame(self,task):
+        #prompt the player to end the game
+        if self.exit:
+            print "Exiting?"
+            self.exitText = OnscreenText(text="Are you sure you want to leave?\nHit 'EXIT' again to confirm or 'NEXT' to cancel.", style=1, fg=(1,.7,0,1), pos=(0,0,0), scale = .1)
+            s = Sequence(Wait(0.5)).start()
+            self.exit = False
+            if self.exit:
+                self.powerOff()
+            elif self.next:
+                return task.cont
+        
+    ## def contTask(self,funcName,delay):
+        ## function = "self."+funcName
+        ## task = str(funcName)
+        ## delay = int(delay)
+        ## if delay == 0:
+            ## taskMgr.add(function,task)
+        ## else:
+            ## taskMgr.doMethodLater(delay,function,task)
+            
+    ## def contTask(self):
+        ## taskMgr.add(self.moveOn,"moveOn")
+        
     def nextScreen(self):
         if self.screen == 0:
-            self.startScreenTex = loader.loadTexture("Textures/instructions.jpg")
-            self.startScreen.setTexture(self.startScreenTex,1)
-            self.startScreen.reparentTo(render)
-            self.screen = 1
-        elif self.screen == 1:
-            self.startScreenTex = loader.loadTexture("Textures/controls.jpg")
-            self.startScreen.setTexture(self.startScreenTex,1)
-            self.startScreen.reparentTo(render)
-            self.screen == 2
-            self.phaseZero()
-        else:
             self.startScreenTex = loader.loadTexture("Textures/startScreen.jpg")
             self.startScreen.setTexture(self.startScreenTex,1)
             self.startScreen.reparentTo(render)
+        elif self.screen == 1:
+            self.startScreenTex = loader.loadTexture("Textures/instructions.jpg")
+            self.startScreen.setTexture(self.startScreenTex,1)
+            self.startScreen.reparentTo(render)
+        elif self.screen == 2:
+            self.startScreenTex = loader.loadTexture("Textures/controls.jpg")
+            self.startScreen.setTexture(self.startScreenTex,1)
+            self.startScreen.reparentTo(render)
+        elif self.screen ==3:
+            self.phaseZero()
+        elif self.screen ==4:
+            self.phaseTwo()
+        if TEST_MODE:
+            if self.screen ==5:
+                self.endRound()
+            elif self.screen ==6:
+                self.endGame()
+            elif self.screen >=7:
+                self.screen = 0
+                self.nextScreen()
              
     def phaseZero(self):
-        self.startScreen.hideNode()
-        self.ui = loader.loaderModel("Models/plane.egg")
+        self.startScreen.detachNode()
+        self.ui = loader.loadModel("Models/plane.egg")
         self.ui.reparentTo(render)
         self.uiTex = loader.loadTexture("Textures/ui.jpg")
         self.ui.setTexture(self.uiTex,1)
+        self.ui.setPosHpr(0,0,0,0,0,0)
+        self.ui.setScale(PLANE_SCALE)
+        self.phaseOne()
         
     def phaseOne(self):
-        self.ui.reparentTo(render)
-        ## def deltaFunc(self,v,r,mult):
-        ## #radius of petri dish
-        ## R=.6
-        ## V = R*mult-((R*mult*v)/r)
-        ## ## print V
-        ## return V
-        
-    def yFinder(self,x):
-        y = 0.2*sqrt(9-25*x*x)
-        ## print y
-        
-    def phaseTwo(self):
         self.ui.reparentTo(render)
         # Load petridish
         self.dish = loader.loadModel("Models/petridish.egg")
         self.dish.reparentTo(render)
         dishTex = loader.loadTexture("Textures/PetriDish.jpg")
         self.dish.setTexture(dishTex, 1)
-        self.dish.setScale(0.001)
-        self.dish.setPosHpr(0,0,0,0,0,0)
+        self.dish.setScale(0.00075/3)
+        self.dish.setPosHpr(0,0,.325,0,0,0)
         # Load the nanobot
         self.robot = loader.loadModel("Models/NanoBot1.egg")
         self.robot.reparentTo(render)
-        ## self.robotTex = loader.loadTexture("Textures/Nano1Body.jpg")
-        ## self.robot.setTexture(self.robotTex,1)
-        self.robot.setPosHpr(0,0,-.25,0,0,0)
-        self.robot.setScale(0.0025)
-        ## self.robot.place()
-        self.phaseTwo()
-        self.yFinder(0)
+        self.robot.setPosHpr(.175,0,-.125,180,270,0)
+        self.robot.setScale(0.002*3)
+        # Load the mana textures for mana in the dish
+        self.manaTex = {"red" :  loader.loadTexture("Textures/HEX_Red.jpg"),
+                        "yellow" : loader.loadTexture("Textures/HEX_Yellow.jpg"),
+                        "blue" : loader.loadTexture("Textures/HEX_Blue.jpg"),
+                        "green" : loader.loadTexture("Textures/HEX_Green.jpg") }
+        # Spawn the grid and texture the individual mana
+        self.hexGrid = loader.loadModel("Models/hexGrid.egg")
+        self.hexGrid.reparentTo(render)
+        self.hexGrid.setScale(.00045/3)
+        self.hexGrid.setPosHpr(0,-1,.2,90,90,90)
+        self.mana = []
+        for j in xrange(NUM_RINGS):
+            for i in xrange(NUM_GEMS[j]):
+                self.mana.append(self.hexGrid.find("**/Hex"+str(j+1)+"_"+str(i+1)))
+                ## print self.mana[-1]
+                randElem = randint(0,3)
+                if randElem == 0:
+                    self.mana[i].setTexture(self.manaTex["red"],1)
+                elif randElem == 1:
+                    self.mana[i].setTexture(self.manaTex["yellow"],1)
+                elif randElem == 2:
+                    self.mana[i].setTexture(self.manaTex["blue"],1)
+                elif randElem == 3:
+                    self.mana[i].setTexture(self.manaTex["green"],1)
+            ## self.hexGrid.place()
+        #Prompt the player for their first choice
         
-        # Load the mana orbs
-        self.mana = [None] * 33
-        self.manaTex = {"earth" :  loader.loadTexture("Textures/HEX_Green.jpg"),
-                           "wind" : loader.loadTexture("Textures/HEX_Yellow.jpg"),
-                           "fire" : loader.loadTexture("Textures/HEX_Red.jpg"),
-                           "water" : loader.loadTexture("Textures/HEX_Blue.jpg") }
-        # Spawn all of the mana orbs
-        for i in xrange(85):
-            # Load the mana models and scale them
-            self.mana[i] = (loader.loadModel("Models/petridish.egg"))
-            self.mana[i].reparentTo(render)
-            self.mana[i].setHpr(0,0,0)
-            self.mana[i].setScale(0.00005)
-            randElem = randint(0,3)
-            if randElem == 0:
-                self.mana[i].setTexture(self.manaTex["earth"],1)
-                self.earthCount += 1
-            elif randElem == 1:
-                self.mana[i].setTexture(self.manaTex["wind"],1)
-                self.windCount += 1
-            elif randElem == 2:
-                self.mana[i].setTexture(self.manaTex["fire"],1)
-                self.fireCount += 1
-            elif randElem == 3:
-                self.mana[i].setTexture(self.manaTex["water"],1)
-                self.waterCount += 1
         
-        #gem positioning
-        self.mana[0].setPos(0,-0.5,0)
-        self.mana[1].setPos(0,-0.5,0)
-        self.mana[2].setPos(0,-0.5,0)
-        self.mana[3].setPos(0,-0.5,0)
-        self.mana[4].setPos(0,-0.5,0)
-        self.mana[5].setPos(0,-0.5,0)
-        self.mana[6].setPos(0,-0.5,0)
-        self.mana[7].setPos(0,-0.5,0)
-        self.mana[8].setPos(0,-0.5,0)
-        self.mana[9].setPos(0,-0.5,0)
-        self.mana[10].setPos(0,-0.5,0)
-        self.mana[11].setPos(0,-0.5,0)
-        self.mana[12].setPos(0,-0.5,0)
-        self.mana[13].setPos(0,-0.5,0)
-        self.mana[14].setPos(0,-0.5,0)
-        self.mana[15].setPos(0,-0.5,0)
-        self.mana[16].setPos(0,-0.5,0)
-        self.mana[17].setPos(0,-0.5,0)
-        self.mana[18].setPos(0,-0.5,0)
-        self.mana[19].setPos(0,-0.5,0)
-        self.mana[20].setPos(0,-0.5,0)
-        self.mana[21].setPos(0,-0.5,0)
-        self.mana[22].setPos(0,-0.5,0)
-        self.mana[23].setPos(0,-0.5,0)
-        self.mana[24].setPos(0,-0.5,0)
-        self.mana[25].setPos(0,-0.5,0)
-        self.mana[26].setPos(0,-0.5,0)
-        self.mana[27].setPos(0,-0.5,0)
-        self.mana[28].setPos(0,-0.5,0)
-        self.mana[29].setPos(0,-0.5,0)
-        self.mana[30].setPos(0,-0.5,0)
-        self.mana[31].setPos(0,-0.5,0)
-        self.mana[32].setPos(0,-0.5,0)
+        #Prompt the player to perform the sequence
+        
+        
+        #Prompt the player for their second choice
+        
+        
+        #Prompt the player for the second sequence
+        
+        
+        self.colorOne = "Red"
+        self.colorTwo = "Green"
+        self.loadedManaTex = [None,None]
+        self.loadedManaTex[0] = loader.loadTexture("Textures/HEX_"+str(self.colorOne)+".jpg")
+        self.loadedManaTex[1] = loader.loadTexture("Textures/HEX_"+str(self.colorTwo)+".jpg")
+        ## self.phaseTwo()
+        
+    def phaseTwo(self):
+        self.ui.reparentTo(render)
+        # Move the petridish and rescale it
+        self.dish.setScale(0.00075)
+        self.dish.setPosHpr(0,0,0,0,0,0)
+        # Move the robot and rescale it
+        self.robot.setPosHpr(0,0,0,180,270,0)
+        self.robot.setScale(0.002)
+        # Load the loaded mana
+        self.loadedMana = [None,None]
+        for i in xrange(2):
+            self.loadedMana[i] = loader.loadModel("Models/petridish.egg")
+            self.loadedMana[i].reparentTo(render)
+            self.loadedMana[i].setTexture(self.loadedManaTex[i],1)
+            self.loadedMana[i].setPosHpr(0,-.25,0,0,0,0)
+            self.loadedMana[i].setScale(0.00005)
+        self.loadedMana[0].setZ(.03)
+        self.loadedMana[1].setZ(-.0375)
+        # Move the grid and rescale it
+        self.hexGrid.setScale(.00045)
+        self.hexGrid.setPosHpr(0,-1,0,90,90,90)
         
     def endRound(self):
         print "Round over"
-        self.ui.hideNode()
+        self.ui.detachNode()
+        self.hexGrid.detachNode()
+        self.dish.detachNode()
+        self.robot.detachNode()
+        self.loadedMana[0].detachNode()
+        self.loadedMana[1].detachNode()
+        for i in xrange(len(self.mana)):
+            self.mana[i].detachNode()
         self.startScreen.reparentTo(render)
         self.startScreenTex = loader.loadTexture("Textures/endRound.jpg")
         self.startScreen.setTexture(self.startScreenTex,1)
         
-    def exitGame(self):
+        
+    def endGame(self):
         print "Game over"
-        self.ui.hideNode()
+        self.ui.detachNode()
         self.startScreen.reparentTo(render)
         self.startScreenTex = loader.loadTexture("Textures/endGame.jpg")
         self.startScreen.setTexture(self.startScreenTex,1)
@@ -232,7 +273,7 @@ class World(DirectObject):
     
     def touchRec(self,which):
         # a touch sensor has been received, string which from config T_FUNC array
-        print "Touch received:", which
+        ## print "Touch received:", which
         self.touch[which] = True
     
     def motionRec(self,state):
@@ -242,7 +283,7 @@ class World(DirectObject):
         
     def irRec(self,which):
         # a IR sensor has been received, string which from config IR_FUNC array
-        print "IR received:", which
+        ## print "IR received:", which
         self.ir[which] = True
     
     def pressureRec(self,state):
@@ -256,39 +297,58 @@ class World(DirectObject):
     def checkSensors(self,task):
         #earth ir sensor pressed
         if self.ir[0]:
-            self.earth = True
+            self.red = True
+            print "Red pressed"
         #wind ir sensor pressed
         if self.ir[1]:
-            self.wind = True
+            self.yellow = True
+            print "Yellow pressed"
         #fire ir sensor pressed
         if self.ir[2]:
-            self.fire = True
+            self.blue = True
+            print "Blue pressed"
         #water ir sensor pressed
         if self.ir[3]:
-            self.water = True
-        
+            self.green = True
+            print "Green pressed"
+            
         #next button pressed
         if self.touch[0]:
-            self.next = True
+            self.exit = True
+            print "Exit pressed"
         #practice button pressed
         if self.touch[1]:
-            self.practice = True
+            self.help = True
+            print "Help pressed"
         #help button pressed
         if self.touch[2]:
-            self.help = True
+            self.tutorial = True
+            print "Tutorial pressed"
         #exit button pressed
         if self.touch[3]:
-            self.exit = True
+            self.next = True
+            print "Next pressed"
+        s = Sequence(Wait(0.5),Func(self.resetVals)).start()
+        return Task.cont
         
+    def resetVals(self):
         #Reset values so as to make sensor reads instantaneous
         self.ir = [False, False, False, False]
         self.touch = [False, False, False, False]
-        return Task.again
+        self.red = False
+        self.yellow = False
+        self.blue = False
+        self.green = False
+        self.next = False
+        self.practice = False
+        self.help = False
+        self.exit = False
         
 ###################### SYSTEM ################################################
 
-    def exit(self):
-        self.phidget.allLEDsOff()
+    def powerOff(self):
+        if not TEST_MODE:
+            self.phidget.allLEDsOff()
         sys.exit()
 
 w = World()

@@ -1,4 +1,8 @@
 TEST_MODE = True
+NUM_GEMS = [2,6,12]
+NUM_RINGS = 3
+PLANE_SCALE = 0.44
+NEXT_DELAY = 0.25
 
 # how many interface kits are attached
 NUM_INTERFACES = 1
